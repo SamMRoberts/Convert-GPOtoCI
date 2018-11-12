@@ -19,16 +19,16 @@ In my tests, this script can query for and create a CI with over 200 registry va
 This script must be executed from a system that has access to both the GroupPolicy and ConfigurationManager PowerShell modules.  The GroupPolicy module is installed with the Remote Admin Tools and the ConfigurationManager module is installed with the ConfigMgr Admin Console.  Additionally, if the 'ResultantSetOfPolicy' option is used the user must have remote admin access to that system.  Extract the .ZIP file and execute the PowerShell script via a PS console.
 
 ### Parameters:
-*GroupPolicy [optional]* - This is enabled by default and will make the script query only for one specified group policy.
-*GpoTarget [required unless ResultantSetOfPolicy option is used]* - Name of group policy object
-*ResultantSetOfPolicy [optional]* - Utilizes a resultant set of policy to determine the set of applied GPOs.  Cannot be used in conjunction with the GroupPolicy option.
-*ComputerName [required when ResultantSetOfPolicy is used]* - Name of system to run RSOP on.
-*DomainTarget [required]* - Fully qualified domain name
-*SiteCode [required]* - ConfigMgr site code
-*Remediate [optional]* - Enable configuration item to remediate non-compliant settings
-*Severity [optional]* - Sets the severity of non-compliant items.  (None, Informational, Warning or Critical)
-*ExportOnly [optional]* - Exports the Configuration Item to a CAB file to be manually imported
-*Log [optional]* - Writes all discovered registry keys and their related GPO name to a file.
+*GroupPolicy** *[optional]* - This is enabled by default and will make the script query only for one specified group policy.
+**GpoTarget** *[required unless ResultantSetOfPolicy option is used]* - Name of group policy object
+**ResultantSetOfPolicy** *[optional]* - Utilizes a resultant set of policy to determine the set of applied GPOs.  Cannot be used in conjunction with the GroupPolicy option.
+**ComputerName** *[required when ResultantSetOfPolicy is used]* - Name of system to run RSOP on.
+**DomainTarget** *[required]* - Fully qualified domain name
+**SiteCode** *[required]* - ConfigMgr site code
+**Remediate** *[optional]* - Enable configuration item to remediate non-compliant settings
+**Severity** *[optional]* - Sets the severity of non-compliant items.  (None, Informational, Warning or Critical)
+**ExportOnly** *[optional]* - Exports the Configuration Item to a CAB file to be manually imported
+**Log** *[optional]* - Writes all discovered registry keys and their related GPO name to a file.
 
 
 #### Example 1:
