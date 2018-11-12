@@ -20,16 +20,24 @@ This script must be executed from a system that has access to both the GroupPoli
 
 ### Parameters:
 **GroupPolicy** *[optional]* - This is enabled by default and will make the script query only for one specified group policy.
-**GpoTarget** *[required unless ResultantSetOfPolicy option is used]* - Name of group policy object
-**ResultantSetOfPolicy** *[optional]* - Utilizes a resultant set of policy to determine the set of applied GPOs.  Cannot be used in conjunction with the GroupPolicy option.
-**ComputerName** *[required when ResultantSetOfPolicy is used]* - Name of system to run RSOP on.
-**DomainTarget** *[required]* - Fully qualified domain name
-**SiteCode** *[required]* - ConfigMgr site code
-**Remediate** *[optional]* - Enable configuration item to remediate non-compliant settings
-**Severity** *[optional]* - Sets the severity of non-compliant items.  (None, Informational, Warning or Critical)
-**ExportOnly** *[optional]* - Exports the Configuration Item to a CAB file to be manually imported
-**Log** *[optional]* - Writes all discovered registry keys and their related GPO name to a file.
 
+**GpoTarget** *[required unless ResultantSetOfPolicy option is used]* - Name of group policy object
+
+**ResultantSetOfPolicy** *[optional]* - Utilizes a resultant set of policy to determine the set of applied GPOs.  Cannot be used in conjunction with the GroupPolicy option.
+
+**ComputerName** *[required when ResultantSetOfPolicy is used]* - Name of system to run RSOP on.
+
+**DomainTarget** *[required]* - Fully qualified domain name
+
+**SiteCode** *[required]* - ConfigMgr site code
+
+**Remediate** *[optional]* - Enable configuration item to remediate non-compliant settings
+
+**Severity** *[optional]* - Sets the severity of non-compliant items.  (None, Informational, Warning or Critical)
+
+**ExportOnly** *[optional]* - Exports the Configuration Item to a CAB file to be manually imported
+
+**Log** *[optional]* - Writes all discovered registry keys and their related GPO name to a file.
 
 #### Example 1:
 .\Convert-GPOtoCI.ps1 -GpoTarget "Windows 10 Settings" -DomainTarget contoso.com -SiteCode T01
