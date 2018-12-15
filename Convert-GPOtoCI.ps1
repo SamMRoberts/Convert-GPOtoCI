@@ -173,7 +173,7 @@ function New-SCCMConfigurationItemSetting
             [string]$Description = "",
         [Parameter(
             Mandatory=$true)]
-        [ValidateSet('Int64', 'Double', 'String', 'DateTime', 'Version')]
+        [ValidateSet('Int64', 'Double', 'String', 'DateTime', 'Version', 'StringArray')]
             [string]$DataType,
         [Parameter(
             Mandatory=$true)]
@@ -212,6 +212,7 @@ function New-SCCMConfigurationItemSetting
     $settingXml.SimpleSetting.RegistryDiscoverySource.Key = $Key
     $settingXml.SimpleSetting.RegistryDiscoverySource.ValueName = $ValueName
 
+    $settingXml.Save("c:\users\public\test1.xml")
     $settingXml    
 }
 
@@ -255,7 +256,7 @@ function New-SCCMConfigurationItemRule
             [bool]$Changeable,
         [Parameter(
             Mandatory=$true)]
-            [string]$Value,
+            $Value,
         [Parameter(
             Mandatory=$true)]
         [ValidateSet('String', 'Boolean', 'DateTime', 'Double', 'Int64', 'Version', 'FileSystemAccessControl', 'RegistryAccessControl', `
@@ -284,7 +285,15 @@ function New-SCCMConfigurationItemRule
     $resourceID = "ID-$([guid]::NewGuid())"
     #$logicalName = "OperatingSystem_$([guid]::NewGuid())"
 
-    $ruleXml = [xml](Get-Content $templatePath\rule.xml)
+    if ($DataType -eq "StringArray")
+    {
+         $ruleXml = [xml](Get-Content $templatePath\ruleSA.xml)
+    }
+    else
+    {
+        $ruleXml = [xml](Get-Content $templatePath\rule.xml)
+    }
+
     $ruleXml.Rule.Id = $id
     $ruleXml.Rule.Severity = $Severity
     $ruleXml.Rule.Annotation.DisplayName.Text = $DisplayName
@@ -297,10 +306,46 @@ function New-SCCMConfigurationItemRule
     $ruleXml.Rule.Expression.Operands.SettingReference.DataType = $ValueDataType
     $ruleXml.Rule.Expression.Operands.SettingReference.Method = $Method
     $ruleXml.Rule.Expression.Operands.SettingReference.Changeable = $Changeable.ToString().ToLower()
-    $ruleXml.Rule.Expression.Operands.ConstantValue.DataType = $ValueDataType
-    $ruleXml.Rule.Expression.Operands.ConstantValue.Value = $Value
-
-    $ruleXml    
+    
+    # If registry value type is StringArray
+    if ($DataType -eq "StringArray")
+    {
+        $ruleXml.Rule.Expression.Operands.ConstantValueList.DataType = "StringArray"  
+        $valueIndex = 0
+        # For each value in array of values
+        foreach ($v in $Value)
+        {
+            # if not first value in array add new nodes; else just set the one value
+            if ($valueIndex -gt 0)
+            {
+                # if only one index do not specifiy index to copy; else specify the index to copy
+                if ($valueIndex -le 1)
+                {
+                    $newNode = $ruleXml.Rule.Expression.Operands.ConstantValueList.ConstantValue.Clone()                    
+                }
+                else
+                {
+                    $newNode = $ruleXml.Rule.Expression.Operands.ConstantValueList.ConstantValue[0].Clone()
+                }
+                $ruleXml.Rule.Expression.Operands.ConstantValueList.AppendChild($newNode)
+                $ruleXml.Rule.Expression.Operands.ConstantValueList.ConstantValue[$valueIndex].DataType = "String"
+                $ruleXml.Rule.Expression.Operands.ConstantValueList.ConstantValue[$valueIndex].Value = $v
+                
+            }
+            else
+            {
+                $ruleXml.Rule.Expression.Operands.ConstantValueList.ConstantValue.DataType = "String"
+                $ruleXml.Rule.Expression.Operands.ConstantValueList.ConstantValue.Value = $v
+            }    
+            $valueIndex++
+        }
+    }
+    else
+    {
+        $ruleXml.Rule.Expression.Operands.ConstantValue.DataType = $ValueDataType
+        $ruleXml.Rule.Expression.Operands.ConstantValue.Value = $Value
+    }
+    $ruleXml
 }
 
 <#
@@ -376,7 +421,7 @@ function New-SCCMConfigurationItems
     
     for ($i = 1; $i -le 99; $i++)
     {
-        $testCI = Get-CMConfigurationItem -Name $Name
+        $testCI = Get-CMConfigurationItem -Name $Name -Fast
         if ($testCI -eq $null)
         {
             break   
@@ -414,6 +459,9 @@ function New-SCCMConfigurationItems
 		if ($Key.Type -eq "ExpandString")
         {
             $dataType = "String"
+        } elseif ($Key.Type -eq "MultiString")
+        {
+            $dataType = "StringArray"
         } elseif ($Key.Type -eq "DWord")
         {
             $dataType = "Int64"
@@ -426,13 +474,35 @@ function New-SCCMConfigurationItems
         {
             $settingXml = New-SCCMConfigurationItemSetting -DisplayName $dName -Description ("$keyName - $valueName") -DataType $dataType -Hive $hive -Is64Bit $false `
                 -Key $subKey -ValueName $valueName -LogicalName $logicalNameS
-        
-            $ruleXml = New-SCCMConfigurationItemRule -DisplayName ("$valueName - $value - $type") -Description "" -Severity $Severity -Operator Equals -SettingSourceType Registry -DataType $dataType -Method Value -Changeable $Remediate `
+
+            if ($dataType -eq "StringArray")
+            {
+                $operator = "AllOf"
+            }
+            else
+            {
+                $operator = "Equals"
+            }
+            
+            $ruleXml = New-SCCMConfigurationItemRule -DisplayName ("$valueName - $value - $type") -Description "" -Severity $Severity -Operator $operator -SettingSourceType Registry -DataType $dataType -Method Value -Changeable $Remediate `
                 -Value $value -ValueDataType $dataType -AuthoringScope $authScope -SettingLogicalName $logicalNameS -LogicalName $ruleLogName
+            
+            # If array returned search arrary for XmlDocument
+            if ($ruleXml.count -gt 1)
+            {
+                for ($i = 0; $i -lt ($ruleXml.Count); $i++)
+                {
+                    if ($ruleXml[$i].GetType().ToString() -eq "System.Xml.XmlDocument")
+                    {
+                        $ruleXml = $ruleXml[$i]
+                        continue
+                    }
+                }
+            }
             $importS = $ciXml.ImportNode($settingXml.SimpleSetting, $true)
             $ciXml.DesiredConfigurationDigest.OperatingSystem.Settings.RootComplexSetting.AppendChild($importS) | Out-Null
             $importR = $ciXml.ImportNode($ruleXml.Rule, $true)
-        
+
             $ciXml.DesiredConfigurationDigest.OperatingSystem.Rules.AppendChild($importR) | Out-Null
             $ciXml = [xml] $ciXml.OuterXml.Replace(" xmlns=`"`"", "")
             $ciXml.Save($ciFile)
@@ -567,6 +637,17 @@ function Write-Log
 	[string]$logPath = 'gpo_registry_discovery_' + (Get-Date -Format MMddyyyy) + '.log'
 	[string]$outString = $GPOName + "`t" + $RegistryKey.FullKeyPath + "`t" + $RegistryKey.ValueName + "`t" + $RegistryKey.Value + "`t" + $RegistryKey.Type
 	Out-File -FilePath .\$logPath -InputObject $outString -Force -Append
+}
+
+function WriteXmlToScreen ([xml]$xml)
+{
+    $StringWriter = New-Object System.IO.StringWriter;
+    $XmlWriter = New-Object System.Xml.XmlTextWriter $StringWriter;
+    $XmlWriter.Formatting = "indented";
+    $xml.WriteTo($XmlWriter);
+    $XmlWriter.Flush();
+    $StringWriter.Flush();
+    Write-Output $StringWriter.ToString();
 }
 
 if ($GroupPolicy)
