@@ -1,3 +1,5 @@
+Script was formerly found on technet blogs (https://blogs.technet.microsoft.com/samroberts/2017/06/19/create-configmgr-configuration-items-from-group-policy-object/)
+
 # Convert-GPOtoCI
 I have been asked by customers if it is possible to use ConfigMgr to monitor compliance of Group Policy settings.  The short answer has always been yes but it is not easy.  If you had to manually identify all the registry keys associated with a GPO and create the individual CI rules this process could takes hours if not days for larger policies.  This script simplifies the process and queries for the values and creates the CIs in a matter of seconds.  I have seen similar scripts however many of the others still require user to create a .POL file for the script to ingest then import a .CAB file into ConfigMgr.  This script fully automates the process.
 
