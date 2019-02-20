@@ -57,7 +57,7 @@ This script must be executed from a system that has access to both the GroupPoli
 .\Convert-GPOtoCI.ps1 -GpoTarget "Windows 10 Settings" -DomainTarget contoso.com -SiteCode T01 -ExportOnly
 
 ### Tested On:
-Configuration Manager vNext 1706
+Configuration Manager vNext 1706, 1806
 
 ### Change Log
 
@@ -76,3 +76,6 @@ Fixed bug where registry values were always being logged to file even when the -
 #### v 1.2.6 (11/6/2017)
 Bug fixes.
 Allow for creation of User Policy based CIs. 
+
+#### v 1.2.7 (12/15/2018)
+Fixed an issue where mutli string values did not work
