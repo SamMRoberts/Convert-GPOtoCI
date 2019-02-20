@@ -78,4 +78,4 @@ Bug fixes.
 Allow for creation of User Policy based CIs. 
 
 #### v 1.2.7 (12/15/2018)
-Fixed an issue where mutli string values did not work
+Fixed an issue where multi string values did not work
