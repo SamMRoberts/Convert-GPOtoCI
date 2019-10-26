@@ -113,7 +113,7 @@ function Get-GPOKeys
                 }
 				# For each key in list of registry keys
                 foreach ($nKey in $newKeys)
-                {               
+                {
 					# If key is not already in list
                     if ($keyList -notcontains $nKey)
                     {
@@ -140,14 +140,16 @@ function Get-GPOKeys
 		foreach ($key in $keyList)
 		{
 			$values += Get-GPRegistryValue -Name $PolicyName -Domain $Domain -Key $key -ErrorAction SilentlyContinue | select FullKeyPath, ValueName, Value, Type | Where-Object {($_.Value -ne $null) -and ($_.Value.Length -gt 0)} 
-		}
-		if ($Log)
-		{
-			foreach ($value in $values)
-			{
-				Write-Log -RegistryKey $value -GPOName $PolicyName
-			}
-		}
+        }        
+		
+        foreach ($value in $values)
+        {
+            Add-Member -InputObject $value -MemberType NoteProperty -Name GpoName -Value $PolicyName
+            if ($Log)
+            {
+                Write-Log -RegistryKey $value -GPOName $PolicyName
+            }
+        }
 	}
 
     $valueCount = $values.Count
@@ -669,15 +671,19 @@ If ($gpo -ne $null)
 	# If ResultantSetOfPolicy option is used use the OU path to name the CI
 	if ($ResultantSetOfPolicy -eq $true)
 	{
-		$ciName = $Global:ouPath
+        $gpoNames = ($gpo | Select-Object GpoName -Unique).GpoName
+        foreach ($gpoName in $gpoNames) {
+            $subGpo = $gpo | Where-Object {$_.GpoName -eq $gpoName}
+            $ciName = "[GPO] $gpoName ($($Global:ouPath))"
+            New-SCCMConfigurationItems -Name $ciName -Description "This is a GPO compliance settings that was automatically created via PowerShell." -CreationType "WindowsOS" -Severity $Severity -RegistryKeys $subGpo
+        }
 	}
 	# If ResultantSetOfPolicy option is not used use the target GPO to name the CI
 	elseif ($GroupPolicy -eq $true)
 	{
-		$ciName = $GpoTarget
+        $ciName = "[GPO] $GpoTarget"
+        New-SCCMConfigurationItems -Name $ciName -Description "This is a GPO compliance settings that was automatically created via PowerShell." -CreationType "WindowsOS" -Severity $Severity -RegistryKeys $gpo
 	}
-
-	New-SCCMConfigurationItems -Name $ciName -Description "This is a GPO compliance settings that was automatically created via PowerShell." -CreationType "WindowsOS" -Severity $Severity -RegistryKeys $gpo
 
 	Set-Location $startingDrive
 
