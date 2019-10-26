@@ -671,11 +671,16 @@ If ($gpo -ne $null)
 	# If ResultantSetOfPolicy option is used use the OU path to name the CI
 	if ($ResultantSetOfPolicy -eq $true)
 	{
+        Set-Location "$SiteCode`:"
+        Write-Host "Creating Configuration Baseline..."
+        $cmBaseline = New-CMBaseline -Name "$($Global:ouPath)" -Description "This is a GPO baseline that was automatically created via PowerShell."
         $gpoNames = ($gpo | Select-Object GpoName -Unique).GpoName
         foreach ($gpoName in $gpoNames) {
             $subGpo = $gpo | Where-Object {$_.GpoName -eq $gpoName}
             $ciName = "[GPO] $gpoName ($($Global:ouPath))"
             New-SCCMConfigurationItems -Name $ciName -Description "This is a GPO compliance settings that was automatically created via PowerShell." -CreationType "WindowsOS" -Severity $Severity -RegistryKeys $subGpo
+            Write-Host "Adding Configuration Item to Baseline..."
+            Set-CMBaseline -Id $($cmBaseline.CI_ID) -AddOSConfigurationItem (Get-CMConfigurationItem -Name "$ciName" -Fast).CI_ID
         }
 	}
 	# If ResultantSetOfPolicy option is not used use the target GPO to name the CI
