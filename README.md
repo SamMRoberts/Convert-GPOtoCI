@@ -1,3 +1,5 @@
+# No longer under development or support
+
 Script was formerly found on technet blogs (https://blogs.technet.microsoft.com/samroberts/2017/06/19/create-configmgr-configuration-items-from-group-policy-object/)
 
 # Convert-GPOtoCI
